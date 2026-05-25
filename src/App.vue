@@ -1,18 +1,25 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 
-const API_URL = "scraperceb-production.up.railway.app";
+const API_URL = "https://scraperceb-production.up.railway.app";
 
-const agio = ref<number>(0);
+const agio = ref<number>(30);
+const mostrarPrecos = ref(true);
+
 const carregando = ref(false);
 const mensagem = ref("");
 const erro = ref("");
 const downloadUrl = ref("");
 
 async function carregarAgio() {
-  const resposta = await fetch(`${API_URL}/agio`);
-  const dados = await resposta.json();
-  agio.value = dados.agioPercentual;
+  try {
+    const resposta = await fetch(`${API_URL}/agio`);
+    const dados = await resposta.json();
+
+    agio.value = dados.agioPercentual;
+  } catch {
+    erro.value = "Erro ao carregar ágio atual.";
+  }
 }
 
 async function gerarCatalogo() {
@@ -22,7 +29,7 @@ async function gerarCatalogo() {
   downloadUrl.value = "";
 
   try {
-    const atualizar = await fetch(`${API_URL}/agio`, {
+    const atualizarAgio = await fetch(`${API_URL}/agio`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -32,12 +39,18 @@ async function gerarCatalogo() {
       })
     });
 
-    if (!atualizar.ok) {
+    if (!atualizarAgio.ok) {
       throw new Error("Erro ao atualizar ágio.");
     }
 
     const resposta = await fetch(`${API_URL}/catalogo`, {
-      method: "POST"
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        mostrarPrecos: mostrarPrecos.value
+      })
     });
 
     const dados = await resposta.json();
@@ -46,7 +59,10 @@ async function gerarCatalogo() {
       throw new Error(dados.erro || "Erro ao gerar catálogo.");
     }
 
-    mensagem.value = `Catálogo gerado com ${dados.agioPercentual}% de ágio.`;
+    mensagem.value = mostrarPrecos.value
+      ? `Catálogo gerado com ${dados.agioPercentual}% de ágio.`
+      : "Catálogo sem preços gerado com sucesso.";
+
     downloadUrl.value = `${API_URL}${dados.download}`;
   } catch (e) {
     erro.value = e instanceof Error ? e.message : "Erro inesperado.";
@@ -63,9 +79,10 @@ onMounted(carregarAgio);
     <header class="topbar">
       <div class="brand">
         <div class="logo-mark">C&B</div>
+
         <div>
           <h1>CAMARGO & BARROS</h1>
-          <p>GERADOR DE CATÁLOGOS</p>
+          <p>GERADOR DE CATÁLOGO ATACADO</p>
         </div>
       </div>
     </header>
@@ -77,7 +94,7 @@ onMounted(carregarAgio);
         <h2>Gerar catálogo PDF</h2>
 
         <p class="description">
-          Escolha a porcentagem de ágio e gere um catálogo atualizado com preço final de venda.
+          Escolha a porcentagem de ágio e defina se deseja exibir os preços no catálogo.
         </p>
 
         <div class="form-group">
@@ -89,13 +106,27 @@ onMounted(carregarAgio);
               type="number"
               min="0"
               step="1"
-              placeholder="0"
+              placeholder="30"
             />
+
             <span>%</span>
           </div>
         </div>
 
-        <button class="primary" @click="gerarCatalogo" :disabled="carregando">
+        <label class="checkbox">
+          <input
+            v-model="mostrarPrecos"
+            type="checkbox"
+          />
+
+          <span>Mostrar preços no catálogo</span>
+        </label>
+
+        <button
+          class="primary"
+          @click="gerarCatalogo"
+          :disabled="carregando"
+        >
           {{ carregando ? "GERANDO CATÁLOGO..." : "GERAR CATÁLOGO" }}
         </button>
 
@@ -226,7 +257,7 @@ h2 {
   border-radius: 8px;
   overflow: hidden;
   background: white;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .input-wrap input {
@@ -244,6 +275,22 @@ h2 {
   padding: 16px 18px;
   font-size: 20px;
   font-weight: 900;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  font-weight: 800;
+  color: #222;
+  cursor: pointer;
+}
+
+.checkbox input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
 }
 
 .primary {

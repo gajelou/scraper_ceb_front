@@ -127,8 +127,26 @@ onMounted(carregarAgio);
           @click="gerarCatalogo"
           :disabled="carregando"
         >
-          {{ carregando ? "GERANDO CATÁLOGO..." : "GERAR CATÁLOGO" }}
+          <span v-if="carregando" class="loading-content">
+            <span class="tool-loader">🔧</span>
+              GERANDO CATÁLOGO...
+            </span>
+
+            <span v-else>
+              GERAR CATÁLOGO
+            </span>
         </button>
+
+        <div v-if="carregando" class="loading-box">
+        <div class="tools-animation">
+        <span>🔨</span>
+        <span>🔧</span>
+        <span>🪛</span>
+        </div>
+
+  <p>Montando seu catálogo de ferramentas...</p>
+  <small>Isso pode levar alguns instantes.</small>
+</div>
 
         <p v-if="mensagem" class="success">
           {{ mensagem }}
@@ -348,5 +366,78 @@ h2 {
   border-radius: 8px;
   text-align: center;
   font-weight: bold;
+}
+
+.loading-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tool-loader {
+  display: inline-block;
+  animation: spinTool 1s linear infinite;
+}
+
+.loading-box {
+  margin-top: 18px;
+  padding: 18px;
+  background: #fff8d6;
+  border: 2px dashed #f6c400;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.tools-animation {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+
+.tools-animation span {
+  display: inline-block;
+  animation: bounceTool 1s ease-in-out infinite;
+}
+
+.tools-animation span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.tools-animation span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.loading-box p {
+  margin: 0;
+  font-weight: 900;
+  color: #111;
+}
+
+.loading-box small {
+  display: block;
+  margin-top: 5px;
+  color: #555;
+}
+
+@keyframes spinTool {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bounceTool {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-8px) rotate(-12deg);
+  }
 }
 </style>
